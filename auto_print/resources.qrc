@@ -2,4 +2,7 @@
     <qresource prefix="/plugins/auto_print" >
         <file>icon.png</file>
     </qresource>
+    <qresource prefix="/plugins/auto_print" >
+        <file>downloadIcon.png</file>
+    </qresource>
 </RCC>

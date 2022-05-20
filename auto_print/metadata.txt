@@ -6,7 +6,7 @@
 name=autoPrint
 qgisMinimumVersion=3.0
 description=Update the extent of LayoutItemMap and exports PDF
-version=0.1
+version=0.2
 author=Christoph Mohr
 email=moin@chrissem.com
 
@@ -27,7 +27,7 @@ tags=print, layout
 
 homepage=https://github.com/chrimohr/autoPrint
 category=Plugins
-icon=icon.png
+icon=downloadIcon.png
 # experimental flag
 experimental=True
 
