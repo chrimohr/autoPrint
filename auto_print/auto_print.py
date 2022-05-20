@@ -25,6 +25,9 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+from qgis.core import *
+from qgis.utils import iface
+
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
@@ -82,18 +85,17 @@ class autoPrint:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('autoPrint', message)
 
-
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -170,7 +172,6 @@ class autoPrint:
         # will be set False in run()
         self.first_start = True
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -178,7 +179,6 @@ class autoPrint:
                 self.tr(u'&autoPrint'),
                 action)
             self.iface.removeToolBarIcon(action)
-
 
     def run(self):
         """Run method that performs all the real work"""
@@ -189,12 +189,46 @@ class autoPrint:
             self.first_start = False
             self.dlg = autoPrintDialog()
 
+        canvas = iface.mapCanvas()
+        instance = QgsProject.instance()
+        manager = instance.layoutManager()
+
+        # Clear dialog elements
+        self.dlg.layoutComboBox.clear()
+        self.dlg.filename.clear()
+
+        # Populate dialog elements
+        layouts = manager.layouts()
+        self.dlg.layoutComboBox.addItems([layouts.name() for layouts in layouts])
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
+            selectedLayout = self.dlg.layoutComboBox.currentText()
+            layout = manager.layoutByName(selectedLayout)
+
+            items = layout.items()
+
+            # Set Extent
+            for x in items:
+                if isinstance(x, QgsLayoutItemMap):
+                    if x.displayName() != 'Übersichtskarte':
+                        x.zoomToExtent(canvas.extent())
+
+            # Export
+            if self.dlg.PdfCheckBox.isChecked():
+                if self.dlg.filename.text():
+                    projectHome = instance.readPath("./")
+                    filename = self.dlg.filename.text()
+                    path = projectHome + "/" + filename + ".pdf"
+
+                    exporter = QgsLayoutExporter(layout)
+                    exporter.exportToPdf(path, QgsLayoutExporter.PdfExportSettings())
+                    self.iface.messageBar().pushMessage("Success", "Exported", level=Qgis.Success, duration=3)
+                else:
+                    self.iface.messageBar().pushMessage("Error", "No filename was specified", level=Qgis.Critical,
+                                                        duration=3)
             pass
